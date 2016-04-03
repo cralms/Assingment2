@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+        <meta name="description" content="Page Description">
+        <meta name="author" content="Riccardo Loggini">
+        <title>Social Data: Assignment 2</title>
+
+        <!-- Bootstrap -->
+        <link href="css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="js/d3/d3.js"></script>
+        <style type="text/css">
+        p {
+            color: #377387;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: FontAwesome;
+        }
+        h5 {
+            font-weight: bold;
+            font-family: FontAwesome;
+            color: #377387;
+        }
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+        }
+
+        .axis text {
+            font-family: sans-serif;
+            font-size: 11px;
+        }
+        .button {
+            background-image: -webkit-linear-gradient(top, #78966E, #377387);
+          background-image: linear-gradient(to bottom, #78966E, #377387);
+            -webkit-box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
+            -moz-box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
+            box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
+            border-bottom-color:#2c46b8;
+            border:1px solid #6F8994;
+            border-radius:5px;
+            -moz-border-radius:5px;
+            -webkit-border-radius:5px;
+            color:#000;
+            font-family:'FontAwesome';
+            font-size:16px;
+            text-shadow:#6F8994 0 1px 0;
+            padding:5px
+        }
+        button:hover {
+            border: 2px dashed #B8165F;
+        }
+        button:focus {
+            border: 2px double #B8165F;
+        }
+        div.tooltip {   
+            position: absolute;           
+            text-align: center;           
+            width: 100px;                  
+            height: 28px;                 
+            padding: 2px;             
+            font: 12px sans-serif;        
+            background: lightsteelblue;   
+            border: 0px;      
+            border-radius: 8px;           
+            pointer-events: none;         
+        }
+        </style>
+    </head>
+    
+        <div class="page-header">
+          <h1>Assignment 2<small> of Social Data Analysis 2016</small></h1>
+        </div>
+        <div class="container">
+            <h3>Assignment 2A: Simple SVG stuff</h3>
+            <p>5 squares with different colors and increasingly transparent. They go from bottom of the SVG element to the top and each of them has a gray boundary of width 2 and dimensions 80.</p>
+            <div id="square"></div>
+            <h3>Assignment 2B: One scatter plot and two datasets</h3>
+            <h5>Prostitution and vehicle theft crimes in SF districts in 2003 and 2015</h5>
+            <div id="text"></div>
+            <div id="vis1"></div>
+            <button id="button2003" class="button">2003</button>
+            <button id="button2015" class="button">2015</button>
+            <p>The reason why we use the same axes for both years is because what we want to show is the difference between the two years and not between the districts in the same year. Hence, we have to maintain the same measurement unit to have an obvious comparison.</p>
+            <h3>Assignment 2C: One barchart and (at least) two datasets</h3>
+            <h5>Number of occurences for each crime, for all the districts and for the top3 (Southern, Mission and Northern). Hovering mouse on bars shows crime category.</h5>
+            <div id="vis2"></div>
+            <button id="Categories" class="button">Categories</button>
+            <button id="Total" class="button">Total</button>
+            <button id="SOUTHERN" class="button">SOUTHERN</button>
+            <button id="MISSION" class="button">MISSION</button>
+            <button id="NORTHERN" class="button">NORTHERN</button>
+        <body>
+            <!-- Part 2A-->
+        <script type="text/javascript">
+            var dataset1 = [5,10,15,20,25];
+            // Width and height of canvas
+            var w1 = 600;
+            var h1 = 200;
+            var chart2A;
+            var padding1 = 1;
+            // Create svg element
+            chart2A = d3.select("#square")
+                .append("svg")
+                .attr("width", w1)
+                .attr("height", h1);
+
+            chart2A.selectAll("rect")
+                .data(dataset1)
+                .enter()
+                .append("rect")
+                .attr("x",function(d,i){
+                    return 50*i+padding1;
+                })
+                .attr("y",function(d,i){
+                    return 60-i*15;
+                })
+                .attr("width", 80)
+                .attr("height", 80)
+                .attr("fill", function(d,i){
+                    switch(i){
+                        case 0:
+                            return "purple"
+                        case 1:
+                            return "blue"
+                        case 2:
+                            return "green"
+                        case 3:
+                            return "yellow"
+                        case 4:
+                            return "red"
+                    }   
+                })
+                .attr("stroke", "gray")
+                .attr("stroke-width", 2)
+                .attr("opacity", function(d,i){ 
+                    return 1.0-0.2*i;
+                });
+        </script>
+        <!-- Part 2B-->
+        <script type="text/javascript">
+            //Variable declaration
+
+            // Width and height of canvas
+            var w2 = 700;
+            var h2 = 450; 
+            // Padding for visualization 
+            var padding2 = 30;
+            var xScale1, yScale1;
+            var xAxis, yAxis;
+            // var svg;
+            var chart2B;
+            var is2003 = 1;
+        </script>
+        <script type="text/javascript">
+            // Load the file
+            var dataset2003 = [];
+            var dataset2015 = [];
+            d3.csv("Incidents_2003_2015.csv", function(error,data) {
+                if(error){
+                    console.log("error");
+                } else{
+                    // dataset = [];
+                    for (j=0;j<10;j++){
+                        dataset2003.push(data[j]);
+                        dataset2015.push(data[j+10]);
+                    }   
+
+                    text1();
+                    makeScale1();
+                    makeScatter1();
+                    makeText1();    
+                    makeAxis1();    
+                    // mouseClick1();
+                }
+            });
+        </script>
+        <script type="text/javascript">
+            function text1(){
+                d3.selectAll("#text")
+                    .data(dataset2003)
+                    .append("p")
+                    .text("Scatter plot showing the change in 2 specific crimes between years 2003 and 2015 in San Francisco districts.")
+                    .style("color", "#377387")
+                    .attr("font-family", 'FontAwesome')
+                    .attr("font-size", "9px")
+            };
+    
+            function makeScale1(){
+                xScale1 = d3.scale.linear()
+                    .domain([0, d3.max(dataset2003, function(d){return parseInt(d.Prostitution)})])
+                    .range([2*padding2, w2-padding2*2]);
+                yScale1 = d3.scale.linear()
+                    .domain([0, d3.max(dataset2003, function(d){return parseInt(d.Vehicle_Theft)})])
+                    .range([h2-padding2, padding2]);
+
+                // Define axis
+                xAxis = d3.svg.axis()
+                        .scale(xScale1)
+                        .orient("bottom")
+                        .ticks(10);
+                yAxis = d3.svg.axis()
+                        .scale(yScale1)
+                        .orient("left")
+                        .ticks(10);
+            }
+        </script>
+        <script type="text/javascript">
+            function makeScatter1(){
+                // Create svg element
+                chart2B = d3.select("#vis1")
+                    .append("svg")
+                    .attr("width", w2)
+                    .attr("height", h2);
+
+
+                // Define clipping path
+                chart2B.append("clipPath")
+                    .attr("id", "chart-area")
+                    .append("rect")
+                    .attr({
+                        x: padding2+30,
+                        y: padding2,
+                        width: w2-padding2*3-30,
+                        height: h2-padding2*2
+                    });
+
+                // Create scatter
+                chart2B.append("g")
+                    .attr("id", "circles")
+                    .attr("clip-path", "url(#chart-area)")
+                    .selectAll("circle")
+                    .data(dataset2003)
+                    .enter()
+                    .append("circle")
+                    .attr("cx", function(d){
+                        if(d.Year == '2003'){
+                            return xScale1(parseInt(d.Prostitution));
+                        }
+                    })
+                    .attr("cy", function(d){
+                        if(d.Year == '2003'){
+                            return yScale1(parseInt(d.Vehicle_Theft));
+                        }
+                    })
+                    // radius proportional to total crimes of distr
+                    .attr("r", function(d){
+                        return parseInt(d.Total_Crimes/20000); 
+                    })
+                    .attr("fill", function(d, i){
+                            return "rgb("+(78+i*10)+","+(128-i*10)+","+(178-i*10)+")"
+                    });
+                }
+
+            function makeText1(){
+                chart2B.selectAll("text")
+                    .data(dataset2003)
+                    .enter()
+                    .append("text")
+                    .text(function(d){
+                        if(d.Year == '2003'){
+                            return d.Pd_District;
+                        }
+                    })
+                    .attr("x", function(d){
+                        return xScale1(parseInt(d.Prostitution));
+                    })
+                    .attr("y", function(d){
+                        return yScale1(parseInt(d.Vehicle_Theft)+parseInt(d.Total_Crimes/2500));
+                    })
+                    .attr("font-family", 'FontAwesome')
+                    .attr("font-size", "11px")
+                    .attr("fill", function(d, i){
+                            return "rgb("+(178-i*10)+","+(128+i)+","+(78+i*10)+")"
+                    });         
+            }
+                
+            function makeAxis1(){
+                // Create x-axis
+                chart2B.append("g")
+                    .attr("class", "x axis")
+                    .attr("transform", "translate(0,"+(h2-padding2)+")")
+                    .call(xAxis);
+                // Create y-axis
+                chart2B.append("g")
+                    .attr("class", "y axis")
+                    .attr("transform", "translate("+ 2*padding2+",0)")
+                    .call(yAxis);
+
+                //axis labels
+                chart2B.append("text")
+                    .attr("class", "x label")
+                    .attr("text-anchor", "middle")
+                    .attr("x", w2/2)
+                    .attr("y", h2)
+                    .text("PROSTITUTION")
+                    .attr("font-family", 'FontAwesome')
+                    .attr("font-size", "14px")
+                chart2B.append("text")
+                    .attr("class", "y label")
+                    .attr("text-anchor", "middle")
+                    .attr("x", -w2/4)
+                    .attr("y", 2)
+                    .attr("dy", ".75em")
+                    .attr("transform", "rotate(-90)")
+                    .text("VEHICLE THEFT")
+                    .attr("font-family", 'FontAwesome')
+                    .attr("font-size", "14px")
+            }
+        </script>
+        <script type="text/javascript">
+            //function mouseClick1(){
+                //On click, update with new data            
+                d3.select("#button2015")
+                    .on("click", function() {
+                        is2003 = -1;
+                        datasetB = dataset2015;
+    
+                        //Update all circles
+                        chart2B.selectAll("circle")
+                           .data(datasetB)
+                           .transition()
+                           .duration(2000)
+                           .attr("cx", function(d){
+                                    return xScale1(parseInt(d.Prostitution));
+                            })
+                            .attr("cy", function(d){
+                                    return yScale1(parseInt(d.Vehicle_Theft));
+                            })
+                            .attr("fill", function(d, i){
+                                return "rgb("+(178-i*10)+","+(128+i)+","+(78+i*10)+")"
+                            })
+
+                        // update labels
+                        chart2B.selectAll("text")
+                            .data(datasetB)
+                            .transition()
+                            .duration(2000)
+                            .text(function(d){
+                                    return d.Pd_District;
+                            })
+                            .attr("x", function(d){
+                                return xScale1(parseInt(d.Prostitution));
+                            })
+                            .attr("y", function(d){
+                                return yScale1(parseInt(d.Vehicle_Theft)+parseInt(d.Total_Crimes/2500));
+                            })
+                            .attr("font-family", 'FontAwesome')
+                                .attr("font-size", "11px")
+                            .attr("fill", function(d, i){
+                                return "rgb("+(78+i*10)+","+(128-i*10)+","+(178-i*10)+")"
+                            }); 
+                     });
+                d3.select("#button2003")
+                    .on("click", function() {
+                        is2003 = 1;
+                        datasetB = dataset2003;
+    
+                        //Update all circles
+                        chart2B.selectAll("circle")
+                           .data(datasetB)
+                           .transition()
+                           .duration(2000)
+                           .attr("cx", function(d){
+                                    return xScale1(parseInt(d.Prostitution));
+                            })
+                            .attr("cy", function(d){
+                                    return yScale1(parseInt(d.Vehicle_Theft));
+                            })
+                            .attr("fill", function(d, i){
+                                return "rgb("+(78+i*10)+","+(128-i*10)+","+(178-i*10)+")"
+                            })
+
+                        // update labels
+                        chart2B.selectAll("text")
+                            .data(datasetB)
+                            .transition()
+                            .duration(2000)
+                            .text(function(d){
+                                    return d.Pd_District;
+                            })
+                            .attr("x", function(d){
+                                return xScale1(parseInt(d.Prostitution));
+                            })
+                            .attr("y", function(d){
+                                return yScale1(parseInt(d.Vehicle_Theft)+parseInt(d.Total_Crimes/2500));
+                            })
+                            .attr("font-family", 'FontAwesome')
+                                .attr("font-size", "11px")
+                            .attr("fill", function(d, i){
+                                return "rgb("+(178-i*10)+","+(128+i)+","+(78+i*10)+")"
+                            }); 
+                     });
+            //}
+        </script>
+        <!-- Part 2C-->
+        <script type="text/javascript">
+        // Width and height
+            var w3 = 600;
+            var h3 = 400;
+            var xScale2, yScale2;
+            // var svg;
+            var chart2C;
+            var tooltip;
+            var div;
+        </script>
+        <script type="text/javascript">
+            // Load the file
+            var dataset;
+            d3.csv("Incidents_total_and_top3_pd.csv", function(error,data3) {
+                if(error){
+                    console.log("error");
+                } else{
+                    dataset = data3;
+                    makeScale2();
+                    makeChart2();
+                    makeText2();
+                    mouseClick2();
+                }
+            });
+        </script>
+        <script type="text/javascript">
+            function makeScale2(){
+                xScale2 = d3.scale.ordinal()
+                    .domain(d3.range(dataset.length))
+                    .rangeRoundBands([0, w3], 0.05)
+                yScale2 = d3.scale.linear()
+                    .domain([0, d3.max(dataset, function(d){return parseInt(d.Total)})])
+                    .range([0, h3]);
+                
+                //make tooltip that shows name of crime on mouseover
+                div = d3.select("body").append("div")   
+                    .attr("class", "tooltip")               
+                    .style("opacity", 0);
+            }
+        </script>
+        <script type="text/javascript">
+            function makeChart2(){
+                // Create svg element
+                chart2C = d3.select("#vis2")
+                    .append("svg")
+                    .attr("width", w3)
+                    .attr("height", h3);
+
+                // Create rectangles
+                chart2C.selectAll("rect")
+                    .data(dataset)
+                    .enter()
+                    .append("rect")
+                    .attr("x", function(d,i){
+                        return xScale2(i);
+                    })
+                    .attr("y", function(d){
+                        return h3/4;
+                    })
+                    .attr("width", xScale2.rangeBand())
+                    .attr("height", function(d){
+                        return h3/2;
+                    })
+                    .attr("fill", function(d){
+                        return "rgb(0,"+(128)+","+(128)+")";
+                    })
+                    .attr("stroke", "purple")
+                    .attr("stroke-width", 2)
+                    
+                    .on("mouseover", function(d){
+                        div.transition()
+                            .duration(200)
+                            .style("opacity", .9);
+                        div.text(d.Crime)
+                            .style("left", (d3.event.pageX) + "px")     
+                            .style("top", (d3.event.pageY) + "px"); 
+                    })
+                     .on("mouseout", function(d) {       
+                        div.transition()        
+                            .duration(500)      
+                            .style("opacity", 0);   
+                    });
+            }
+        </script>
+        <script type="text/javascript">
+            function makeText2(){
+                // Create labels
+                chart2C.selectAll("text")
+                    .data(dataset)
+                    .enter()
+                    .append("text")
+                    .text(function(d){
+                        return d.Crime;
+                    })
+                    .attr("text-anchor", "middle")
+                    .attr("x", function(d,i){
+                        return -200;
+                    })
+                    .attr("y", function(d,i){
+                        return xScale2(i)+10;
+                    })
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", "11px")
+                    .attr("fill", "black")
+                    .attr("transform", "rotate(-90)" );         
+            }
+        </script>
+        <script type="text/javascript">
+            function mouseClick2(){
+            d3.select("#Categories")
+                .on("click", function(){
+                    // Recalibrate bars' heights
+                    yScale2.domain([0, d3.max(dataset, function(d){return parseInt(d.Total)})])         // Update all rects
+                    chart2C.selectAll("rect")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .attr("y", function(d){
+                        return h3/4;
+                        })
+                        .attr("height", function(d){
+                        return h3/2;
+                        })
+                        .attr("fill", function(d){
+                        return "rgb(0,"+(128)+","+(128)+")";
+                        })
+                        .attr("stroke", "purple")
+                        .attr("stroke-width", 2)
+
+
+                    chart2C.selectAll("text")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .text(function(d){
+                            return d.Crime;
+                        })
+                        .attr("x", function(d,i){
+                        return -200;
+                    })
+                });
+            d3.select("#Total")
+                .on("click", function(){
+                    // Recalibrate bars' heights
+                    yScale2.domain([0, d3.max(dataset, function(d){return parseInt(d.Total)})])         // Update all rects
+                    chart2C.selectAll("rect")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .attr("y", function(d){
+                            return h3-yScale2(parseInt(d.Total));
+                        })
+                        .attr("height", function(d){
+                            return yScale2(d.Total);
+                        })
+                        .attr("fill", function(d){
+                            return "rgb("+(d.Total/50)+","+(d.Total/500)+","+(d.Total/5000)+")";
+                        })
+                        .attr("stroke-width", 0)
+
+
+                    chart2C.selectAll("text")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .text(function(d){
+                            return d.Total;
+                        })
+                        .attr("x", function(d,i){
+                            return -200;
+                        })
+                });
+            d3.select("#SOUTHERN")
+                .on("click", function(){
+                    // Recalibrate bars' heights
+                    yScale2.domain([0, d3.max(dataset, function(d){return parseInt(d.SOUTHERN)})])      // Update all rects
+                    chart2C.selectAll("rect")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .attr("y", function(d){
+                            return h3-yScale2(parseInt(d.SOUTHERN));
+                        })
+                        .attr("height", function(d){
+                            return yScale2(d.SOUTHERN);
+                        })
+                        .attr("fill", function(d){
+                            return "rgb(0,"+(d.SOUTHERN/50)+",0)";
+                        })
+                        .attr("stroke-width", 0)
+
+                    chart2C.selectAll("text")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .text(function(d){
+                            return d.SOUTHERN;
+                        })
+                        .attr("x", function(d,i){
+                            return -330;
+                        })
+                });
+            d3.select("#MISSION")
+                .on("click", function(){
+                    // Recalibrate bars' heights
+                    yScale2.domain([0, d3.max(dataset, function(d){return parseInt(d.MISSION)})])       // Update all rects
+                    chart2C.selectAll("rect")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .attr("y", function(d){
+                            return h3-yScale2(parseInt(d.MISSION));
+                        })
+                        .attr("height", function(d){
+                            return yScale2(d.MISSION);
+                        })
+                        .attr("fill", function(d){
+                            return "rgb(0,0,"+(d.MISSION/50)+")";
+                        })
+                        .attr("stroke-width", 0)
+
+                    chart2C.selectAll("text")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .text(function(d){
+                            return d.MISSION;
+                        })
+                        .attr("x", function(d,i){
+                            return -230;
+                        })
+                });
+
+            d3.select("#NORTHERN")
+                .on("click", function(){
+                    // Recalibrate bars' heights
+                    yScale2.domain([0, d3.max(dataset, function(d){return parseInt(d.NORTHERN)})])      // Update all rects
+                    chart2C.selectAll("rect")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .attr("y", function(d){
+                            return h3-yScale2(parseInt(d.NORTHERN));
+                        })
+                        .attr("height", function(d){
+                            return yScale2(d.NORTHERN);
+                        })
+                        .attr("fill", function(d){
+                            return "rgb("+(d.NORTHERN/50)+",0,0)";
+                        })
+                        .attr("stroke-width", 0)
+
+                    chart2C.selectAll("text")
+                        .data(dataset)
+                        .transition()
+                        .delay(function(d, i){
+                            return i/dataset.length*1000;
+                        })
+                        .duration(500)
+                        .ease("cubic-in-out")
+                        .text(function(d){
+                            return d.NORTHERN;
+                        })
+                        .attr("x", function(d,i){
+                            return -280;
+                        })
+                });
+            }
+        </script>
+            <h3>Assignment 2D: Visualizing geodata</h3>
+            <div class="well-lg">
+            <div class="bs-example bs-example-tabs" data-example-id="togglable-tabs">
+                <ul id="myTabs" class="nav nav-tabs" role="tablist">
+                    <li role="presentation" class="active">
+                    <a href="#K2-tab-content" id="K-tab" role="tab" data-toggle="tab" aria-controls="home" aria-expanded="true">
+                        <h4> K = 2</h4></a>
+                    </li>
+                    <li role="presentation" class=""><a href="#K3-tab-content" role="tab" id="K3-tab" data-toggle="tab" aria-controls="profile" aria-expanded="false">
+                       <h4> K = 3</h4></a>
+                    </li>
+                     <li role="presentation" class=""><a href="#K4-tab-content" role="tab" id="K4-tab" data-toggle="tab" aria-controls="profile" aria-expanded="false">
+                         <h4>K = 4</h4></a>
+                    </li>
+                     <li role="presentation" class=""><a href="#K5-tab-content" role="tab" id="K5-tab" data-toggle="tab" aria-controls="profile" aria-expanded="false"> <h4>K = 5</h4></a>
+                    </li>
+                     <li role="presentation" class=""><a href="#K6-tab-content" role="tab" id="K6-tab" data-toggle="tab" aria-controls="profile" aria-expanded="false">
+                         <h4>K = 6</h4></a>
+                    </li>
+
+                </ul>
+                <div id="myTabContent" class="tab-content">
+
+                    <div role="tabpanel" class="tab-pane fade active in" id="K2-tab-content"  aria-labelledby="home-tab">
+                        <div id="K2"></div>
+                    </div>
+                    <div role="tabpanel" class="tab-pane fade" id="K3-tab-content" aria-labelledby="profile-tab">
+                        <div id="K3"></div>
+                    </div>
+<div role="tabpanel" class="tab-pane fade" id="K4-tab-content" aria-labelledby="profile-tab">
+                        <div id="K4"></div>
+                    </div>
+<div role="tabpanel" class="tab-pane fade" id="K5-tab-content" aria-labelledby="profile-tab">
+                        <div id="K5"></div>
+                    </div>
+<div role="tabpanel" class="tab-pane fade" id="K6-tab-content" aria-labelledby="profile-tab">
+                        <div id="K6"></div>
+                    </div>
+
+                </div>
+            </div>
+            </div>
+
+        </div>
+
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="js/bootstrap.min.js"></script>
+<!--functions for exercise 2D-->
+        <script src="d3_geodata_map_functions.js"></script>
+    </body>
+</html>
